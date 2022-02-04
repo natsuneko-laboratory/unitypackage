@@ -1,12 +1,15 @@
 {
   "name": "@natsuneko-laboratory/unitypackage",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Operate UnityPackage from Node.js",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "repository": "https://github.com/natsuneko-laboratory/unitypackage.git",
   "author": "Natsune Mochizuki",
   "license": "MIT",
   "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
     "lint:eslint": "eslint --ext 'src/**/*.{ts,js}'",
     "lint:prettier": "prettier --check 'src/**/*.{ts,js}'",
     "fix:eslint": "eslint --fix 'src/**/*.{ts,js}'",

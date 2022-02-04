@@ -27,6 +27,16 @@ const meta = [
 await archive(meta, "/path/to", "./archive.unitypackage");
 ```
 
+## Development
+
+```bash
+# prepare
+$ yarn install
+
+# publish
+$ npm publish --access public
+```
+
 ## License
 
 MIT by [Natsune - @6jz](https://twitter.com/6jz)
