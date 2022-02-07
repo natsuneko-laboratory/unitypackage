@@ -1,6 +1,6 @@
 {
   "name": "@natsuneko-laboratory/unitypackage",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Operate UnityPackage from Node.js",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
