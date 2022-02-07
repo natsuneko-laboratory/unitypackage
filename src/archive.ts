@@ -1,6 +1,5 @@
 import archiver from "archiver";
-import { createWriteStream } from "fs";
-import { copyFile, writeFile } from "fs/promises";
+import { createWriteStream, promises } from "fs";
 import mkdirp from "mkdirp";
 import path from "path";
 
@@ -11,7 +10,7 @@ const writeAsset = async (meta: MetaFile, root: string, temp: string) => {
 
   await mkdirp(assetPath);
 
-  await copyFile(meta.path, path.join(assetPath, "asset.meta"));
+  await promises.copyFile(meta.path, path.join(assetPath, "asset.meta"));
 
   if (meta.meta.folderAsset !== "yes") {
     const actual = path.join(
@@ -19,7 +18,7 @@ const writeAsset = async (meta: MetaFile, root: string, temp: string) => {
       path.basename(meta.path, ".meta")
     );
 
-    await copyFile(actual, path.join(assetPath, "asset"));
+    await promises.copyFile(actual, path.join(assetPath, "asset"));
   }
 
   const relative = path.relative(root, meta.path);
@@ -27,7 +26,7 @@ const writeAsset = async (meta: MetaFile, root: string, temp: string) => {
     .join(path.dirname(relative), path.basename(relative, ".meta"))
     .replace(/\\/g, "/");
 
-  await writeFile(path.join(assetPath, "pathname"), pathname);
+  await promises.writeFile(path.join(assetPath, "pathname"), pathname);
 };
 
 const archiveAsTar = (dir: string): Promise<string> =>
@@ -79,7 +78,7 @@ const archive = async (
   const tar = await archiveAsTar(dir);
   const pkg = await archiveAsZip(tar);
 
-  await copyFile(pkg, dist);
+  await promises.copyFile(pkg, dist);
   await temp.clean();
 };
 

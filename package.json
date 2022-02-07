@@ -8,6 +8,7 @@
   "author": "Natsune Mochizuki",
   "license": "MIT",
   "scripts": {
+    "prepublish": "npm run build",
     "build": "tsc",
     "prepare": "npm run build",
     "lint:eslint": "eslint --ext 'src/**/*.{ts,js}'",
