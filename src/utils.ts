@@ -1,4 +1,4 @@
-import { readFile, lstat, mkdtemp, rm } from "fs/promises";
+import { promises } from "fs";
 import { load } from "js-yaml";
 import os from "os";
 import path from "path";
@@ -14,9 +14,9 @@ export type TempDir = {
 };
 
 const createTempDir = async (): Promise<TempDir> => {
-  const dir = await mkdtemp(path.join(os.tmpdir(), "unity-package-"));
+  const dir = await promises.mkdtemp(path.join(os.tmpdir(), "unity-package-"));
   const clean = async (): Promise<void> => {
-    await rm(dir, { recursive: true });
+    await promises.rm(dir, { recursive: true });
   };
 
   return {
@@ -27,7 +27,7 @@ const createTempDir = async (): Promise<TempDir> => {
 
 const isFileExists = async (filepath: string): Promise<boolean> => {
   try {
-    return (await lstat(filepath)).isFile();
+    return (await promises.lstat(filepath)).isFile();
   } catch (e) {
     return false;
   }
@@ -35,7 +35,7 @@ const isFileExists = async (filepath: string): Promise<boolean> => {
 
 const readUnityMeta = async (meta: string): Promise<MetaFile> => {
   if (await isFileExists(meta)) {
-    const metaContent = await readFile(meta, "utf8");
+    const metaContent = await promises.readFile(meta, "utf8");
     return { meta: load(metaContent, {}), path: meta } as MetaFile;
   }
 
