@@ -1,7 +1,8 @@
-import archiver from "archiver";
-import { createWriteStream, promises } from "fs";
+import AdmZip from "adm-zip";
+import { promises } from "fs";
 import mkdirp from "mkdirp";
 import path from "path";
+import _tar from "tar";
 
 import { createTempDir, readUnityMeta, MetaFile } from "./utils";
 
@@ -29,33 +30,56 @@ const writeAsset = async (meta: MetaFile, root: string, temp: string) => {
   await promises.writeFile(path.join(assetPath, "pathname"), pathname);
 };
 
-const archiveAsTar = (dir: string): Promise<string> =>
-  new Promise<string>((resolve, reject) => {
-    const output = path.join(dir, "..", "archtemp.tar");
-    const stream = createWriteStream(output);
-    const archive = archiver("tar");
+const getDirFiles = async (
+  dir: string,
+  files: string[] = []
+): Promise<string[]> => {
+  const entries = await promises.readdir(dir, { withFileTypes: true });
+  const dirs = [];
 
-    archive.on("error", reject);
-    archive.on("finish", () => resolve(output));
+  // eslint-disable-next-line no-restricted-syntax
+  for (const entry of entries) {
+    if (entry.isDirectory()) dirs.push(`${dir}/${entry.name}`);
+    else if (entry.isFile()) files.push(`${dir}/${entry.name}`);
+  }
 
-    archive.pipe(stream);
-    archive.directory(dir, false);
-    archive.finalize();
+  // eslint-disable-next-line no-restricted-syntax
+  for (const d of dirs) {
+    // eslint-disable-next-line
+    files = await getDirFiles(d, files);
+  }
+
+  return files;
+};
+
+const archiveAsTar = async (dir: string): Promise<string> => {
+  const output = path.join(dir, "..", "archtemp.tar");
+  const files = await getDirFiles(dir);
+
+  return new Promise((resolve, reject) => {
+    _tar.create(
+      { gzip: false, file: output, cwd: dir },
+      files.map((w) => path.relative(dir, w)),
+      (err) => {
+        if (err) return reject();
+        return resolve(output);
+      }
+    );
   });
+};
 
-const archiveAsZip = async (filepath: string): Promise<string> =>
-  new Promise<string>((resolve, reject) => {
-    const output = `${filepath}.gz`;
-    const stream = createWriteStream(output);
-    const archive = archiver("zip");
+const archiveAsZip = async (filepath: string): Promise<string> => {
+  const output = `${filepath}.gz`;
+  const zip = new AdmZip();
+  zip.addFile("archtemp.tar", await promises.readFile(filepath));
 
-    archive.on("error", reject);
-    archive.on("finish", () => resolve(output));
-
-    archive.pipe(stream);
-    archive.file(filepath, { name: "archtemp.tar" });
-    archive.finalize();
+  return new Promise((resolve, reject) => {
+    zip.writeZip(output, (err) => {
+      if (err) return reject(err);
+      return resolve(output);
+    });
   });
+};
 
 /**
  * Archive files and folders as UnityPackage.
