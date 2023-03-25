@@ -1,7 +1,9 @@
 import { promises } from "fs";
-import { load } from "js-yaml";
 import os from "os";
 import path from "path";
+
+const UNITY_GUID_REGEX = /^guid: (?<guid>[a-z0-9]{32})$/gm;
+const UNITY_FOLDER_ASSET_REGEX = /^folderAsset: yes$/g;
 
 export type MetaFile = {
   path: string;
@@ -33,10 +35,23 @@ const isFileExists = async (filepath: string): Promise<boolean> => {
   }
 };
 
+const loadYamlPoorly = (
+  content: string
+): { guid: string; folderAsset: "yes" | undefined } => {
+  const isFolderAsset = UNITY_FOLDER_ASSET_REGEX.test(content);
+  const ret = UNITY_GUID_REGEX.exec(content);
+
+  return {
+    guid: ret!.groups!.guid,
+    folderAsset: isFolderAsset ? "yes" : undefined,
+  };
+};
+
 const readUnityMeta = async (meta: string): Promise<MetaFile> => {
   if (await isFileExists(meta)) {
     const metaContent = await promises.readFile(meta, "utf8");
-    return { meta: load(metaContent, {}), path: meta } as MetaFile;
+    // Unity's meta is INVALID YAML format, f**k Unity Technologies.
+    return { meta: loadYamlPoorly(metaContent), path: meta } as MetaFile;
   }
 
   throw new Error(`meta file not found : ${meta}`);
