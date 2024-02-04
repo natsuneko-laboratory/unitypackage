@@ -1,0 +1,8 @@
+{
+  "extends": "./node_modules/@natsuneko-laboratory/kiana/lib/tsconfig.node.json",
+  "compilerOptions": {
+    "composite": true,
+    "baseUrl": "."
+  },
+  "include": ["vite.config.ts"]
+}
