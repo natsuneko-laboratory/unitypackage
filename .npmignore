@@ -1,8 +1,10 @@
+.github/
 bin/
-src/
+src/fixtures/
 
-.eslintignore
-.eslintrc
 .gitignore
-tsconfig.json
-yarn.lock
+.node-version
+biome.json
+tsconfig.*json
+tsconfig.*tsbuildinfo
+vite.config.ts

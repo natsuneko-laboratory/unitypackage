@@ -37,4 +37,17 @@ const isFileExists = async (path: string): Promise<boolean> => {
   }
 };
 
-export { createTempDirectory, getDirectoryFiles, isFileExists };
+const isDirectoryExists = async (path: string): Promise<boolean> => {
+  try {
+    return (await lstat(path)).isDirectory();
+  } catch {
+    return false;
+  }
+};
+
+export {
+  createTempDirectory,
+  getDirectoryFiles,
+  isFileExists,
+  isDirectoryExists,
+};

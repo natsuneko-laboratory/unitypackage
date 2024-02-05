@@ -1,109 +1,179 @@
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { join, relative, resolve as absolute, dirname } from "node:path";
+
 import AdmZip from "adm-zip";
-import { promises } from "fs";
-import mkdirp from "mkdirp";
-import path from "path";
-import _tar from "tar";
+import normalize from "normalize-path";
+import tar from "tar";
 
-import { createTempDir, readUnityMeta, MetaFile } from "./utils";
+import { createTempDirectory, getDirectoryFiles, isFileExists } from "./fs";
+import { read } from "./meta";
 
-const writeAsset = async (meta: MetaFile, root: string, temp: string) => {
-  const assetPath = path.join(temp, meta.meta.guid);
+const isPathsHasMetaFile = async (paths: string[]): Promise<void> => {
+  const ret = await Promise.all(paths.map((w) => isFileExists(`${w}.meta`)));
+  if (ret.some((w) => !w)) {
+    const notFound = ret
+      .map((w, i) => (w ? undefined : i))
+      .filter((w) => !!w)
+      .map((w) => w as number)
+      .map((w) => paths[w]);
 
-  await mkdirp(assetPath);
-
-  await promises.copyFile(meta.path, path.join(assetPath, "asset.meta"));
-
-  if (meta.meta.folderAsset !== "yes") {
-    const actual = path.join(
-      path.dirname(meta.path),
-      path.basename(meta.path, ".meta")
-    );
-
-    await promises.copyFile(actual, path.join(assetPath, "asset"));
+    throw new Error(`meta not found: ${notFound.join(",")}`);
   }
-
-  const relative = path.relative(root, meta.path);
-  const pathname = path
-    .join(path.dirname(relative), path.basename(relative, ".meta"))
-    .replace(/\\/g, "/");
-
-  await promises.writeFile(path.join(assetPath, "pathname"), pathname);
 };
 
-const getDirFiles = async (
-  dir: string,
-  files: string[] = []
-): Promise<string[]> => {
-  const entries = await promises.readdir(dir, { withFileTypes: true });
-  const dirs = [];
+const isPathsInsideProjectRoot = async ({
+  paths,
+  root,
+}: {
+  paths: string[];
+  root: string;
+}): Promise<void> => {
+  const r = normalize(absolute(root));
+  const ret = await Promise.all(
+    paths.map((w) => normalize(absolute(w))).map((w) => w.includes(r))
+  );
 
-  // eslint-disable-next-line no-restricted-syntax
-  for (const entry of entries) {
-    if (entry.isDirectory()) dirs.push(`${dir}/${entry.name}`);
-    else if (entry.isFile()) files.push(`${dir}/${entry.name}`);
+  if (ret.some((w) => !w)) {
+    const notInside = ret
+      .map((w, i) => (w ? undefined : i))
+      .filter((w) => w !== undefined)
+      .map((w) => w as number)
+      .map((w) => paths[w]);
+
+    throw new Error(`path not inside in project: ${notInside.join(",")}`);
   }
-
-  // eslint-disable-next-line no-restricted-syntax
-  for (const d of dirs) {
-    // eslint-disable-next-line
-    files = await getDirFiles(d, files);
-  }
-
-  return files;
 };
 
-const archiveAsTar = async (dir: string): Promise<string> => {
-  const output = path.join(dir, "..", "archtemp.tar");
-  const files = await getDirFiles(dir);
+const write = async ({
+  path,
+  root,
+  arch,
+  filter,
+}: {
+  /** actual asset path */
+  path: string;
+  /** unity project root */
+  root: string;
+  /** archive root */
+  arch: string;
+  /** filter */
+  filter?: (path: string) => string;
+}): Promise<void> => {
+  const meta = await read(`${path}.meta`);
+  const directory = join(arch, meta.guid);
 
-  return new Promise((resolve, reject) => {
-    _tar.create(
-      { gzip: false, file: output, cwd: dir },
-      files.map((w) => path.relative(dir, w)),
+  await mkdir(directory, { recursive: true });
+  await copyFile(meta.path, join(directory, "asset.meta"));
+
+  if (!meta.isFolderAsset) {
+    await copyFile(path, join(directory, "asset"));
+  }
+
+  const pathname = normalize(relative(root, path));
+  await writeFile(
+    join(directory, "pathname"),
+    filter ? normalize(filter(pathname)) : pathname
+  );
+};
+
+const toTarGz = async (dir: string): Promise<string> => {
+  const files = await getDirectoryFiles({ root: dir });
+  const o = join(dir, "..", "archtemp.tar");
+
+  await new Promise((resolve, reject) =>
+    tar.create(
+      { gzip: false, file: o, cwd: dir },
+      files.map((w) => relative(dir, w)),
       (err) => {
-        if (err) return reject();
-        return resolve(output);
+        if (err) {
+          return reject();
+        }
+
+        return resolve(o);
       }
-    );
-  });
-};
+    )
+  );
 
-const archiveAsZip = async (filepath: string): Promise<string> => {
-  const output = `${filepath}.gz`;
   const zip = new AdmZip();
-  zip.addFile("archtemp.tar", await promises.readFile(filepath));
+  zip.addFile("archtemp.tar", await readFile(o));
 
-  return new Promise((resolve, reject) => {
-    zip.writeZip(output, (err) => {
-      if (err) return reject(err);
-      return resolve(output);
+  return await new Promise((resolve, reject) => {
+    zip.writeZip(`${o}.gz`, (err) => {
+      if (err) {
+        return reject();
+      }
+
+      return resolve(`${o}.gz`);
     });
   });
 };
 
-/**
- * Archive files and folders as UnityPackage.
- * @param files .meta paths to archive
- * @param root  Unity root directory
- * @param dist  destination path
- */
-const archive = async (
-  files: string[],
-  root: string,
-  dist: string
-): Promise<void> => {
-  const temp = await createTempDir();
-  const dir = path.join(temp.dir, "archive");
-  const meta = await Promise.all(
-    files.map((w) => readUnityMeta(path.join(root, w)))
-  );
+type ArchiveArgs = {
+  /**
+   * actual file paths to archive (not `.meta` file path)
+   */
+  files: string[];
 
-  await Promise.all(meta.map((w) => writeAsset(w, root, dir)));
-  const tar = await archiveAsTar(dir);
-  const pkg = await archiveAsZip(tar);
+  /**
+   * unity project root directory
+   */
+  root: string;
 
-  await promises.copyFile(pkg, dist);
-  await temp.clean();
+  /**
+   * archive (`.unitypackage`) destination path
+   */
+  dest: string;
+
+  // extras
+
+  /**
+   * transform input paths on write
+   * @param path input file path (relative on root)
+   * @returns input file path (relative on root)
+   * @example filter: (path) => join("..", "Packages", "com.natsuneko.unitypackage", path); // Assets/MonoBehaviour.cs → Packages/com.natsuneko.unitypackage/MonoBehaviour.cs
+   */
+  filter?: (path: string) => string;
 };
 
-export default archive;
+/**
+ * create a new unitypackage from `files` on `root`, to `dest`.
+ * @param param0
+ */
+const archive = async ({
+  files,
+  root,
+  dest,
+  filter,
+}: ArchiveArgs): Promise<void> => {
+  // validate args
+  await isPathsHasMetaFile(files);
+  await isPathsInsideProjectRoot({ paths: files, root });
+
+  const temp = await createTempDirectory();
+
+  try {
+    const dir = join(temp.path, "archive");
+
+    // write actual assets
+    await Promise.all(
+      files.map((w) => write({ path: w, root, arch: dir, filter }))
+    );
+
+    // write virtual assets
+    const virtual = files
+      .map((w) => dirname(w))
+      .filter((w) => !!relative(root, w));
+    await Promise.all(
+      Array.from(new Set(virtual)).map((w) =>
+        write({ path: w, root, arch: dir, filter })
+      )
+    );
+
+    const pkg = await toTarGz(dir);
+    await copyFile(pkg, dest);
+  } finally {
+    await temp.dispose();
+  }
+};
+
+export { archive };
