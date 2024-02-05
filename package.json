@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "adm-zip": "^0.5.10",
-    "mkdirp": "^3.0.1",
     "normalize-path": "^3.0.0",
     "tar": "^6.2.0"
   },
