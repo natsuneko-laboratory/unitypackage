@@ -1,37 +1,49 @@
 # @natsuneko-laboratory/unitypackage
 
-Create UnityPackage from Node.js, written in TypeScript. No platform dependency.
+Archive / Extract / Search UnityPackage from Node.js, written in TypeScript. No platform dependency.
 
 ## Requirements
 
-- Node.js >= 16
+- Node.js >= 18
 
 ## Install
 
-```
+```bash
+$ npm add @natsuneko-laboratory/unitypackage
 $ yarn add @natsuneko-laboratory/unitypackage
+$ pnpm add @natsuneko-laboratory/unitypackage
 ```
 
 ## Usage
 
 ```typescript
-import { archive } from "@natsuneko-laboratory/unitypackage";
+import { archive, extract } from "@natsuneko-laboratory/unitypackage";
 
-// archive as UnityPackage
-const meta = [
-  "/path/to/Assets/file1.meta",
-  "/path/to/Assets/file2.meta",
-  "/path/to/Assets/file3.meta",
-];
+// create a unitypackage
+await archive({
+  files: [
+    // files to archive
+    "/path/to/assets/MonoBehaviour.cs",
+    "/path/to/assets/Prefab.prefab",
+  ],
+  root: "/path/to", // unity project root
+  dest: "/path/to/archive.unitypackage", // destination path
+  transform: (path) => join("Assets", join), // transform path (optional)
+});
 
-await archive(meta, "/path/to", "./archive.unitypackage");
+// extract a unitypackage
+await extract({
+  file: "/path/to/archive.unitypackage",
+  root: "/path/to", // unity project root
+  transform: (path) => join("Assets", join), // transform path (optional)
+});
 ```
 
 ## Development
 
 ```bash
 # prepare
-$ yarn install
+$ pnpm install
 
 # publish
 $ npm publish --access public
@@ -39,4 +51,4 @@ $ npm publish --access public
 
 ## License
 
-MIT by [Natsune - @6jz](https://twitter.com/6jz)
+MIT by [@6jz](https://twitter.com/6jz)
