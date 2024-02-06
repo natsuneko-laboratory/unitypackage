@@ -17,7 +17,7 @@ $ pnpm add @natsuneko-laboratory/unitypackage
 ## Usage
 
 ```typescript
-import { archive, extract, search } from "@natsuneko-laboratory/unitypackage";
+import { archive, extract } from "@natsuneko-laboratory/unitypackage";
 
 // create a unitypackage
 await archive({
@@ -37,18 +37,6 @@ await extract({
   root: "/path/to", // unity project root
   transform: (path) => join("Assets", join), // transform path (optional)
 });
-
-// search unitypackage entries
-await search({
-  path: "Assets/MonoBehaviour.cs", // search by path
-  guid: "456bc8eb3f133524aad6204de5d9c325", // search by guid
-}); // => { guid: "xxx", path: "xxx", asset?: Buffer }[]
-
-// alias of search({ path: "xxx" })
-await searchByPath("xxx");
-
-// alias of search({ guid: "xxx" })
-await searchByGuid("xxx");
 ```
 
 ## Development
