@@ -20,8 +20,6 @@ describe("extract", () => {
     root: string,
     contents: PackageContent[]
   ): Promise<void> => {
-    console.log({ root, contents });
-
     for (const content of contents) {
       const asset = join(root, content.pathname);
       const isExists = content.isAsset
