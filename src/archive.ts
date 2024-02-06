@@ -48,6 +48,7 @@ const write = async ({
   path,
   root,
   arch,
+  unsafe,
   transform,
 }: {
   /** actual asset path */
@@ -56,24 +57,34 @@ const write = async ({
   root: string;
   /** archive root */
   arch: string;
+  /** skip meta */
+  unsafe?: boolean;
   /** filter */
   transform?: (path: string) => string;
 }): Promise<void> => {
-  const meta = await read(`${path}.meta`);
-  const directory = join(arch, meta.guid);
+  const safe = !unsafe;
 
-  await mkdir(directory, { recursive: true });
-  await copyFile(meta.path, join(directory, "asset.meta"));
+  try {
+    const meta = await read(`${path}.meta`);
+    const directory = join(arch, meta.guid);
 
-  if (!meta.isFolderAsset) {
-    await copyFile(path, join(directory, "asset"));
+    await mkdir(directory, { recursive: true });
+    await copyFile(meta.path, join(directory, "asset.meta"));
+
+    if (!meta.isFolderAsset) {
+      await copyFile(path, join(directory, "asset"));
+    }
+
+    const pathname = normalize(relative(root, path));
+    await writeFile(
+      join(directory, "pathname"),
+      transform ? normalize(transform(pathname)) : pathname
+    );
+  } catch {
+    if (safe) {
+      await read(`${path}.meta`); // throw errors
+    }
   }
-
-  const pathname = normalize(relative(root, path));
-  await writeFile(
-    join(directory, "pathname"),
-    transform ? normalize(transform(pathname)) : pathname
-  );
 };
 
 const toTarGz = async (dir: string): Promise<string> => {
@@ -164,10 +175,22 @@ const archive = async ({
     // write virtual assets
     const virtual = files
       .map((w) => dirname(w))
-      .filter((w) => !!relative(root, w));
+      .filter((w) => !!relative(root, w)); // filter root
+
+    // no validate sub directories (such as Assets/, Packages/, Library/) because
+    const noValidates = virtual.filter(
+      (w) => normalize(relative(root, w)).split("/").length <= 1
+    );
+
     await Promise.all(
       Array.from(new Set(virtual)).map((w) =>
-        write({ path: w, root, arch: dir, transform })
+        write({
+          path: w,
+          root,
+          arch: dir,
+          transform,
+          unsafe: noValidates.includes(w),
+        })
       )
     );
 
