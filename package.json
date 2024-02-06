@@ -26,7 +26,7 @@
     "prepublish": "npm run build",
     "build": "tsc && npm run build:vite && npm run build:tsc",
     "build:vite": "vite build",
-    "build:tsc": "rm tsconfig.types.tsbuildinfo && tsc --project ./tsconfig.types.json",
+    "build:tsc": "rm -f tsconfig.types.tsbuildinfo && tsc --project ./tsconfig.types.json",
     "build:esm": "npx tsx node_modules/@natsuneko-laboratory/kiana/bin/esm-exports.ts --pattern **/{archive,extract}.mjs --entrypoint dist/index.mjs",
     "test": "vitest",
     "prepare": "npm run build"
