@@ -1,0 +1,9 @@
+{
+  "extends": "./node_modules/@natsuneko-laboratory/kiana/lib/tsconfig.dts.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "declarationDir": "./dist"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts"]
+}
