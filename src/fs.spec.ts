@@ -28,8 +28,8 @@ describe("getDirectories", () => {
   context("if directory is not empty", () => {
     it("returns five items array", async () => {
       await expect(
-        getDirectories({ root: "./src/fixtures" })
-      ).resolves.toStrictEqual(["src/fixtures/FolderAsset"]);
+        getDirectories({ root: "./src/fixtures/Assets" })
+      ).resolves.toStrictEqual(["src/fixtures/Assets/FolderAsset"]);
     });
   });
 });
@@ -55,17 +55,17 @@ describe("getDirectoryFiles", () => {
 
   context("if directory is not empty", () => {
     context("with nested", () => {
-      it("returns five items array", async () => {
+      it("returns seven items array", async () => {
         await expect(
           getDirectoryFiles({ root: "./src/fixtures" })
         ).resolves.toStrictEqual([
-          "src/fixtures/FolderAsset.meta",
-          "src/fixtures/MonoBehaviourAsset.cs",
-          "src/fixtures/MonoBehaviourAsset.cs.meta",
           "src/fixtures/Nested.unitypackage",
           "src/fixtures/NotNested.unitypackage",
-          "src/fixtures/FolderAsset/OtherMonoBehaviourAsset.cs",
-          "src/fixtures/FolderAsset/OtherMonoBehaviourAsset.cs.meta",
+          "src/fixtures/Assets/FolderAsset.meta",
+          "src/fixtures/Assets/MonoBehaviourAsset.cs",
+          "src/fixtures/Assets/MonoBehaviourAsset.cs.meta",
+          "src/fixtures/Assets/FolderAsset/OtherMonoBehaviourAsset.cs",
+          "src/fixtures/Assets/FolderAsset/OtherMonoBehaviourAsset.cs.meta",
         ]);
       });
     });
@@ -73,10 +73,10 @@ describe("getDirectoryFiles", () => {
     context("without nested", () => {
       it("returns two items", async () => {
         await expect(
-          getDirectoryFiles({ root: "./src/fixtures/FolderAsset" })
+          getDirectoryFiles({ root: "./src/fixtures/Assets/FolderAsset" })
         ).resolves.toStrictEqual([
-          "src/fixtures/FolderAsset/OtherMonoBehaviourAsset.cs",
-          "src/fixtures/FolderAsset/OtherMonoBehaviourAsset.cs.meta",
+          "src/fixtures/Assets/FolderAsset/OtherMonoBehaviourAsset.cs",
+          "src/fixtures/Assets/FolderAsset/OtherMonoBehaviourAsset.cs.meta",
         ]);
       });
     });
@@ -87,7 +87,7 @@ describe("isFileExists", () => {
   context("if file exists", () => {
     it("returns true", async () => {
       await expect(
-        isFileExists("./src/fixtures/FolderAsset.meta")
+        isFileExists("./src/fixtures/Assets/FolderAsset.meta")
       ).resolves.toBeTruthy();
     });
   });
