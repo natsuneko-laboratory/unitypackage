@@ -6,7 +6,12 @@ import { dirname, join } from "node:path";
 import tar from "tar";
 
 import { archive } from "./archive";
-import { createTempDirectory, isDirectoryExists, isFileExists } from "./fs";
+import {
+  createTempDirectory,
+  getDirectories,
+  isDirectoryExists,
+  isFileExists,
+} from "./fs";
 import { afterEach } from "node:test";
 
 const context = describe;
@@ -73,6 +78,9 @@ describe("archive", () => {
     root: string,
     contents: PackageContent[]
   ): Promise<void> => {
+    const dirs = await getDirectories({ root });
+    expect(dirs.length).toBe(contents.length);
+
     for (const content of contents) {
       const dir = join(root, content.guid);
       const isExistsDir = await isDirectoryExists(dir);
@@ -194,6 +202,11 @@ describe("archive", () => {
 
         const root = await extract(path);
         await verify(root, [
+          {
+            guid: "bafb03973cae39b4c9811b82bf5b2273",
+            pathname: "Packages/com.natsuneko.test3/FolderAsset",
+            hasAsset: false,
+          },
           {
             guid: "456bc8eb3f135524aad6204de5d9c32c",
             pathname:
