@@ -1,12 +1,17 @@
 name: "Install Node.js with dependencies"
 description: ""
+inputs:
+  version:
+    description: "version of Node.js"
+    required: true
+
 runs:
   using: composite
   steps:
     - name: Install Node.js
       uses: actions/setup-node@v4
       with:
-        node-version-file: ".node-version"
+        node-version: ${{ inputs.version }}
 
     # this workflow maybe broken - GET https://registry.npmjs.org/pnpm error (ERR_INVALID_THIS).
     # - name: Install pnpm
