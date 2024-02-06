@@ -8,6 +8,7 @@ export default defineConfig({
     "node:fs/promises",
     "node:os",
     "node:path",
+    "node:zlib",
     "adm-zip",
     "mkdirp",
     "normalize-path",
