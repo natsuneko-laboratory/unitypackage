@@ -24,7 +24,7 @@ jobs:
         run: |
           pnpm build
 
-      - name: Publish Package
+      - name: Test Package
         shell: bash
         run: |
           pnpm run test
