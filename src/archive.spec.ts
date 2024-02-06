@@ -6,7 +6,12 @@ import { dirname, join } from "node:path";
 import tar from "tar";
 
 import { archive } from "./archive";
-import { createTempDirectory, isDirectoryExists, isFileExists } from "./fs";
+import {
+  createTempDirectory,
+  getDirectories,
+  isDirectoryExists,
+  isFileExists,
+} from "./fs";
 import { afterEach } from "node:test";
 
 const context = describe;
@@ -17,14 +22,14 @@ describe("isPathsHasMetaFile", () => {
       await expect(
         archive({
           files: [
-            "./src/fixtures/MonoBehaviourAsset.cs",
-            "./src/fixtures/NotFoundMonoBehaviour.cs",
+            "./src/fixtures/Assets/MonoBehaviourAsset.cs",
+            "./src/fixtures/Assets/NotFoundMonoBehaviour.cs",
           ],
           root: "./src/fixtures",
           dest: "",
         })
       ).rejects.toThrowError(
-        /^meta not found: .\/src\/fixtures\/NotFoundMonoBehaviour.cs$/
+        /^meta not found: .\/src\/fixtures\/Assets\/NotFoundMonoBehaviour.cs$/
       );
     });
   });
@@ -36,14 +41,14 @@ describe("isPathsInsideProjectRoot", () => {
       await expect(
         archive({
           files: [
-            "./src/fixtures/MonoBehaviourAsset.cs",
-            "./src/fixtures/FolderAsset/OtherMonoBehaviourAsset.cs",
+            "./src/fixtures/Assets/MonoBehaviourAsset.cs",
+            "./src/fixtures/Assets/FolderAsset/OtherMonoBehaviourAsset.cs",
           ],
-          root: "./src/fixtures/FolderAsset",
+          root: "./src/fixtures/Assets/FolderAsset",
           dest: "",
         })
       ).rejects.toThrowError(
-        /^path not inside in project: .\/src\/fixtures\/MonoBehaviourAsset.cs$/
+        /^path not inside in project: .\/src\/fixtures\/Assets\/MonoBehaviourAsset.cs$/
       );
     });
   });
@@ -73,6 +78,9 @@ describe("archive", () => {
     root: string,
     contents: PackageContent[]
   ): Promise<void> => {
+    const dirs = await getDirectories({ root });
+    expect(dirs.length).toBe(contents.length);
+
     for (const content of contents) {
       const dir = join(root, content.guid);
       const isExistsDir = await isDirectoryExists(dir);
@@ -99,59 +107,135 @@ describe("archive", () => {
   });
 
   context("with nested items", () => {
-    it("successful archived with valid structure", async () => {
-      const path = join(temp.path, "test1.unitypackage");
+    context("transform", () => {
+      it("successful archived with valid structure", async () => {
+        const path = join(temp.path, "test1.unitypackage");
 
-      await archive({
-        files: [
-          "src/fixtures/MonoBehaviourAsset.cs",
-          "src/fixtures/FolderAsset/OtherMonoBehaviourAsset.cs",
-        ],
-        root: "./src/fixtures",
-        dest: path,
-        transform: (w) => join("Assets", w),
+        await archive({
+          files: [
+            "src/fixtures/Assets/MonoBehaviourAsset.cs",
+            "src/fixtures/Assets/FolderAsset/OtherMonoBehaviourAsset.cs",
+          ],
+          root: "./src/fixtures",
+          dest: path,
+          transform: (path) =>
+            join(
+              "Packages",
+              "com.natsuneko.test1",
+              ...path.split("/").splice(1)
+            ),
+        });
+
+        const root = await extract(path);
+        await verify(root, [
+          {
+            guid: "456bc8eb3f133524aad6204de5d9c325",
+            pathname: "Packages/com.natsuneko.test1/MonoBehaviourAsset.cs",
+            hasAsset: true,
+          },
+          {
+            guid: "bafb03973cae39b4c9811b82bf5b2273",
+            pathname: "Packages/com.natsuneko.test1/FolderAsset",
+            hasAsset: false,
+          },
+          {
+            guid: "456bc8eb3f135524aad6204de5d9c32c",
+            pathname:
+              "Packages/com.natsuneko.test1/FolderAsset/OtherMonoBehaviourAsset.cs",
+            hasAsset: true,
+          },
+        ]);
       });
+    });
 
-      const root = await extract(path);
-      await verify(root, [
-        {
-          guid: "456bc8eb3f133524aad6204de5d9c325",
-          pathname: "Assets/MonoBehaviourAsset.cs",
-          hasAsset: true,
-        },
-        {
-          guid: "bafb03973cae39b4c9811b82bf5b2273",
-          pathname: "Assets/FolderAsset",
-          hasAsset: false,
-        },
-        {
-          guid: "456bc8eb3f135524aad6204de5d9c32c",
-          pathname: "Assets/FolderAsset/OtherMonoBehaviourAsset.cs",
-          hasAsset: true,
-        },
-      ]);
+    context("no transform", () => {
+      it("successful archived with valid structure", async () => {
+        const path = join(temp.path, "test2.unitypackage");
+
+        await archive({
+          files: [
+            "src/fixtures/Assets/MonoBehaviourAsset.cs",
+            "src/fixtures/Assets/FolderAsset/OtherMonoBehaviourAsset.cs",
+          ],
+          root: "./src/fixtures",
+          dest: path,
+        });
+
+        const root = await extract(path);
+        await verify(root, [
+          {
+            guid: "456bc8eb3f133524aad6204de5d9c325",
+            pathname: "Assets/MonoBehaviourAsset.cs",
+            hasAsset: true,
+          },
+          {
+            guid: "bafb03973cae39b4c9811b82bf5b2273",
+            pathname: "Assets/FolderAsset",
+            hasAsset: false,
+          },
+          {
+            guid: "456bc8eb3f135524aad6204de5d9c32c",
+            pathname: "Assets/FolderAsset/OtherMonoBehaviourAsset.cs",
+            hasAsset: true,
+          },
+        ]);
+      });
     });
   });
 
   context("without nested items", () => {
-    it("successful archived with valid structure", async () => {
-      const path = join(temp.path, "test2.unitypackage");
+    context("transform", () => {
+      it("successful archived with valid structure", async () => {
+        const path = join(temp.path, "test3.unitypackage");
 
-      await archive({
-        files: ["src/fixtures/FolderAsset/OtherMonoBehaviourAsset.cs"],
-        root: "./src/fixtures/FolderAsset",
-        dest: path,
-        transform: (w) => join("Assets", w),
+        await archive({
+          files: ["src/fixtures/Assets/FolderAsset/OtherMonoBehaviourAsset.cs"],
+          root: "./src/fixtures",
+          dest: path,
+          transform: (path) =>
+            join(
+              "Packages",
+              "com.natsuneko.test3",
+              ...path.split("/").splice(1)
+            ),
+        });
+
+        const root = await extract(path);
+        await verify(root, [
+          {
+            guid: "bafb03973cae39b4c9811b82bf5b2273",
+            pathname: "Packages/com.natsuneko.test3/FolderAsset",
+            hasAsset: false,
+          },
+          {
+            guid: "456bc8eb3f135524aad6204de5d9c32c",
+            pathname:
+              "Packages/com.natsuneko.test3/FolderAsset/OtherMonoBehaviourAsset.cs",
+            hasAsset: true,
+          },
+        ]);
       });
+    });
 
-      const root = await extract(path);
-      await verify(root, [
-        {
-          guid: "456bc8eb3f135524aad6204de5d9c32c",
-          pathname: "Assets/OtherMonoBehaviourAsset.cs",
-          hasAsset: true,
-        },
-      ]);
+    context("no transform", () => {
+      it("successful archived with valid structure", async () => {
+        const path = join(temp.path, "test3.unitypackage");
+
+        await archive({
+          files: ["src/fixtures/Assets/MonoBehaviourAsset.cs"],
+          root: "./src/fixtures",
+          dest: path,
+        });
+
+        const root = await extract(path);
+        await verify(root, [
+          {
+            guid: "456bc8eb3f133524aad6204de5d9c325",
+            pathname: "Assets/MonoBehaviourAsset.cs",
+            hasAsset: true,
+          },
+        ]);
+      });
     });
   });
 

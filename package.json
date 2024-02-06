@@ -1,19 +1,44 @@
 {
   "name": "@natsuneko-laboratory/unitypackage",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Archive / Extract / Search UnityPackage from Node.js, written in TypeScript. No platform dependency.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "type": "module",
-  "repository": "https://github.com/natsuneko-laboratory/unitypackage.git",
-  "author": "Natsune Mochizuki",
-  "license": "MIT",
+  "main": "dist/index.cjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./archive": {
+      "import": "./dist/archive.mjs",
+      "require": "./dist/archive.cjs",
+      "types": "./dist/archive.d.ts"
+    },
+    "./extract": {
+      "import": "./dist/extract.mjs",
+      "require": "./dist/extract.cjs",
+      "types": "./dist/extract.d.ts"
+    }
+  },
   "scripts": {
     "prepublish": "npm run build",
-    "build": "tsc && vite build",
+    "build": "tsc && npm run build:vite && npm run build:tsc",
+    "build:vite": "vite build",
+    "build:tsc": "rm -f tsconfig.types.tsbuildinfo && tsc --project ./tsconfig.types.json",
+    "build:esm": "npx tsx node_modules/@natsuneko-laboratory/kiana/bin/esm-exports.ts --pattern **/{archive,extract}.mjs --entrypoint dist/index.mjs",
     "test": "vitest",
     "prepare": "npm run build"
   },
+  "keywords": [
+    "unity",
+    "unitypackage",
+    "github actions"
+  ],
+  "author": "Natsune Mochizuki",
+  "repository": "https://github.com/natsuneko-laboratory/unitypackage.git",
+  "license": "MIT",
   "dependencies": {
     "normalize-path": "^3.0.0",
     "tar": "^6.2.0"
@@ -27,5 +52,8 @@
     "typescript": "^5.3.3",
     "vite": "^5.0.12",
     "vitest": "^1.2.2"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
