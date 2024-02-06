@@ -20,22 +20,35 @@ $ pnpm add @natsuneko-laboratory/unitypackage
 import { archive, extract, search } from "@natsuneko-laboratory/unitypackage";
 
 // create a unitypackage
-const files: string = [
-  "/path/to/assets/MonoBehaviour.cs",
-  "/path/to/assets/Prefab.prefab",
-];
-
 await archive({
-  files: files, // files to archive
+  files: [
+    // files to archive
+    "/path/to/assets/MonoBehaviour.cs",
+    "/path/to/assets/Prefab.prefab",
+  ],
   root: "/path/to", // unity project root
   dest: "/path/to/archive.unitypackage", // destination path
+  transform: (path) => join("Assets", join), // transform path (optional)
 });
 
 // extract a unitypackage
 await extract({
-  package: "/path/to/archive.unitypackage",
+  file: "/path/to/archive.unitypackage",
   root: "/path/to", // unity project root
+  transform: (path) => join("Assets", join), // transform path (optional)
 });
+
+// search unitypackage entries
+await search({
+  path: "Assets/MonoBehaviour.cs", // search by path
+  guid: "456bc8eb3f133524aad6204de5d9c325", // search by guid
+}); // => { guid: "xxx", path: "xxx", asset?: Buffer }[]
+
+// alias of search({ path: "xxx" })
+await searchByPath("xxx");
+
+// alias of search({ guid: "xxx" })
+await searchByGuid("xxx");
 ```
 
 ## Development

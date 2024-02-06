@@ -15,5 +15,5 @@
  */
 
 export { archive } from "./archive";
-// export { extract } from "./extract";
+export { extract } from "./extract";
 // export { search, searchByGuid, searchByPath } from "./search";

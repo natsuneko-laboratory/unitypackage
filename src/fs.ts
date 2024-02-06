@@ -29,6 +29,20 @@ const getDirectoryFiles = async ({
     .map((w) => normalize(join(w.path, w.name)));
 };
 
+const getDirectories = async ({
+  root,
+}: {
+  root: string;
+}): Promise<string[]> => {
+  const entries = await readdir(root, {
+    withFileTypes: true,
+    recursive: false,
+  });
+  return entries
+    .filter((w) => w.isDirectory())
+    .map((w) => normalize(join(w.path, w.name)));
+};
+
 const isFileExists = async (path: string): Promise<boolean> => {
   try {
     return (await lstat(path)).isFile();
@@ -47,6 +61,7 @@ const isDirectoryExists = async (path: string): Promise<boolean> => {
 
 export {
   createTempDirectory,
+  getDirectories,
   getDirectoryFiles,
   isFileExists,
   isDirectoryExists,

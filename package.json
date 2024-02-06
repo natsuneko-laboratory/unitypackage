@@ -15,14 +15,12 @@
     "prepare": "npm run build"
   },
   "dependencies": {
-    "adm-zip": "^0.5.10",
     "normalize-path": "^3.0.0",
     "tar": "^6.2.0"
   },
   "devDependencies": {
     "@biomejs/biome": "1.5.3",
     "@natsuneko-laboratory/kiana": "^1.0.2",
-    "@types/adm-zip": "^0.5.5",
     "@types/node": "^20.11.16",
     "@types/normalize-path": "^3.0.2",
     "@types/tar": "^6.1.11",

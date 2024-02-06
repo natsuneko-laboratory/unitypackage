@@ -4,9 +4,35 @@ import { mkdir, rmdir } from "node:fs/promises";
 import { join } from "node:path";
 import { cwd } from "node:process";
 
-import { getDirectoryFiles, isFileExists } from "./fs";
+import { getDirectories, getDirectoryFiles, isFileExists } from "./fs";
 
 const context = describe;
+
+describe("getDirectories", () => {
+  context("if directory is empty", () => {
+    const path = join(cwd(), "temp", "dir");
+
+    beforeAll(async () => {
+      await mkdir(path, { recursive: true });
+    });
+
+    it("returns empty array", async () => {
+      await expect(getDirectories({ root: path })).resolves.toStrictEqual([]);
+    });
+
+    afterAll(async () => {
+      await rmdir(path);
+    });
+  });
+
+  context("if directory is not empty", () => {
+    it("returns five items array", async () => {
+      await expect(
+        getDirectories({ root: "./src/fixtures" })
+      ).resolves.toStrictEqual(["src/fixtures/FolderAsset"]);
+    });
+  });
+});
 
 describe("getDirectoryFiles", () => {
   context("if directory is empty", () => {
@@ -36,6 +62,8 @@ describe("getDirectoryFiles", () => {
           "src/fixtures/FolderAsset.meta",
           "src/fixtures/MonoBehaviourAsset.cs",
           "src/fixtures/MonoBehaviourAsset.cs.meta",
+          "src/fixtures/Nested.unitypackage",
+          "src/fixtures/NotNested.unitypackage",
           "src/fixtures/FolderAsset/OtherMonoBehaviourAsset.cs",
           "src/fixtures/FolderAsset/OtherMonoBehaviourAsset.cs.meta",
         ]);

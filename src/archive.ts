@@ -1,7 +1,7 @@
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative, resolve as absolute, dirname } from "node:path";
+import { gzip } from "node:zlib";
 
-import AdmZip from "adm-zip";
 import normalize from "normalize-path";
 import tar from "tar";
 
@@ -48,7 +48,7 @@ const write = async ({
   path,
   root,
   arch,
-  filter,
+  transform,
 }: {
   /** actual asset path */
   path: string;
@@ -57,7 +57,7 @@ const write = async ({
   /** archive root */
   arch: string;
   /** filter */
-  filter?: (path: string) => string;
+  transform?: (path: string) => string;
 }): Promise<void> => {
   const meta = await read(`${path}.meta`);
   const directory = join(arch, meta.guid);
@@ -72,7 +72,7 @@ const write = async ({
   const pathname = normalize(relative(root, path));
   await writeFile(
     join(directory, "pathname"),
-    filter ? normalize(filter(pathname)) : pathname
+    transform ? normalize(transform(pathname)) : pathname
   );
 };
 
@@ -94,18 +94,20 @@ const toTarGz = async (dir: string): Promise<string> => {
     )
   );
 
-  const zip = new AdmZip();
-  zip.addFile("archtemp.tar", await readFile(o));
-
-  return await new Promise((resolve, reject) => {
-    zip.writeZip(`${o}.gz`, (err) => {
+  const content = await readFile(o);
+  const zip: Buffer = await new Promise((resolve, reject) => {
+    gzip(content, (err, buffer) => {
       if (err) {
-        return reject();
+        return reject(err);
       }
 
-      return resolve(`${o}.gz`);
+      return resolve(buffer);
     });
   });
+
+  await writeFile(`${o}.gz`, zip);
+
+  return `${o}.gz`;
 };
 
 type ArchiveArgs = {
@@ -132,7 +134,7 @@ type ArchiveArgs = {
    * @returns input file path (relative on root)
    * @example filter: (path) => join("..", "Packages", "com.natsuneko.unitypackage", path); // Assets/MonoBehaviour.cs → Packages/com.natsuneko.unitypackage/MonoBehaviour.cs
    */
-  filter?: (path: string) => string;
+  transform?: (path: string) => string;
 };
 
 /**
@@ -143,7 +145,7 @@ const archive = async ({
   files,
   root,
   dest,
-  filter,
+  transform,
 }: ArchiveArgs): Promise<void> => {
   // validate args
   await isPathsHasMetaFile(files);
@@ -156,7 +158,7 @@ const archive = async ({
 
     // write actual assets
     await Promise.all(
-      files.map((w) => write({ path: w, root, arch: dir, filter }))
+      files.map((w) => write({ path: w, root, arch: dir, transform }))
     );
 
     // write virtual assets
@@ -165,10 +167,11 @@ const archive = async ({
       .filter((w) => !!relative(root, w));
     await Promise.all(
       Array.from(new Set(virtual)).map((w) =>
-        write({ path: w, root, arch: dir, filter })
+        write({ path: w, root, arch: dir, transform })
       )
     );
 
+    // compress
     const pkg = await toTarGz(dir);
     await copyFile(pkg, dest);
   } finally {
