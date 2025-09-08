@@ -1,6 +1,6 @@
 {
   "name": "@natsuneko-laboratory/unitypackage",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Archive / Extract / Search UnityPackage from Node.js, written in TypeScript. No platform dependency.",
   "type": "module",
   "main": "dist/index.cjs",
