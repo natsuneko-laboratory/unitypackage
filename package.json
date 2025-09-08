@@ -1,22 +1,22 @@
 {
   "name": "@natsuneko-laboratory/unitypackage",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Archive / Extract / Search UnityPackage from Node.js, written in TypeScript. No platform dependency.",
   "type": "module",
   "main": "dist/index.cjs",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.cjs.cjs"
     },
     "./archive": {
-      "import": "./dist/archive.mjs",
-      "require": "./dist/archive.cjs"
+      "import": "./dist/archive.es.js",
+      "require": "./dist/archive.cjs.cjs"
     },
     "./extract": {
-      "import": "./dist/extract.mjs",
-      "require": "./dist/extract.cjs"
+      "import": "./dist/extract.es.js",
+      "require": "./dist/extract.cjs.cjs"
     }
   },
   "scripts": {
