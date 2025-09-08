@@ -26,7 +26,7 @@ const getDirectoryFiles = async ({
   const entries = await readdir(root, { withFileTypes: true, recursive: true });
   return entries
     .filter((w) => w.isFile())
-    .map((w) => normalize(join(w.path, w.name)));
+    .map((w) => normalize(join(w.parentPath, w.name)));
 };
 
 const getDirectories = async ({
@@ -40,7 +40,7 @@ const getDirectories = async ({
   });
   return entries
     .filter((w) => w.isDirectory())
-    .map((w) => normalize(join(w.path, w.name)));
+    .map((w) => normalize(join(w.parentPath, w.name)));
 };
 
 const isFileExists = async (path: string): Promise<boolean> => {

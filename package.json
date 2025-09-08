@@ -8,18 +8,15 @@
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     },
     "./archive": {
       "import": "./dist/archive.mjs",
-      "require": "./dist/archive.cjs",
-      "types": "./dist/archive.d.ts"
+      "require": "./dist/archive.cjs"
     },
     "./extract": {
       "import": "./dist/extract.mjs",
-      "require": "./dist/extract.cjs",
-      "types": "./dist/extract.d.ts"
+      "require": "./dist/extract.cjs"
     }
   },
   "scripts": {
@@ -44,14 +41,14 @@
     "tar": "^6.2.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.5.3",
-    "@natsuneko-laboratory/kiana": "^1.0.2",
-    "@types/node": "^20.11.16",
+    "@biomejs/biome": "2.2.3",
+    "@natsuneko-laboratory/kiana": "^1.1.0",
+    "@types/node": "^24.3.1",
     "@types/normalize-path": "^3.0.2",
     "@types/tar": "^6.1.11",
-    "typescript": "^5.3.3",
-    "vite": "^5.0.12",
-    "vitest": "^1.2.2"
+    "typescript": "^5.9.2",
+    "vite": "^7.1.4",
+    "vitest": "^3.2.4"
   },
   "publishConfig": {
     "access": "public"
