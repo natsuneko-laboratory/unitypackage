@@ -3,7 +3,7 @@ import { join, relative, resolve as absolute, dirname } from "node:path";
 import { gzip } from "node:zlib";
 
 import normalize from "normalize-path";
-import tar from "tar";
+import * as tar from "tar";
 
 import { createTempDirectory, getDirectoryFiles, isFileExists } from "./fs";
 import { read } from "./meta";

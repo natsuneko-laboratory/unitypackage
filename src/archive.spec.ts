@@ -3,7 +3,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
-import tar from "tar";
+import * as tar from "tar";
 
 import { archive } from "./archive";
 import {

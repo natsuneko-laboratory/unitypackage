@@ -1,7 +1,7 @@
 import { copyFile, mkdir, readFile } from "node:fs/promises";
 import { resolve as absolute, join, dirname, normalize } from "node:path";
 
-import tar from "tar";
+import * as tar from "tar";
 
 import { createTempDirectory, getDirectories } from "./fs";
 import { read } from "./meta";

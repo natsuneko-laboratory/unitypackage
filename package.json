@@ -38,14 +38,14 @@
   "license": "MIT",
   "dependencies": {
     "normalize-path": "^3.0.0",
-    "tar": "^6.2.0"
+    "tar": "^7.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.3",
     "@natsuneko-laboratory/kiana": "^1.1.0",
     "@types/node": "^24.3.1",
     "@types/normalize-path": "^3.0.2",
-    "@types/tar": "^6.1.11",
+    "@types/tar": "^6.1.13",
     "typescript": "^5.9.2",
     "vite": "^7.1.4",
     "vitest": "^3.2.4"
